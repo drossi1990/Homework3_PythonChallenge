@@ -1,74 +1,58 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[99]:
-
-
+#import modules needed for reading csv and outputting .txt results
 import os
 import csv
 
+#file path for csv to read
+file = 'Resources/election_data.csv'
 
-# In[100]:
+#function which returns number of votes for a given candidate
+def candidate_votes(candidate):
+    with open(file) as csvfile:
+        csvreader = csv.reader(csvfile, delimiter=",")
+        vote_count = 0
+        next(csvreader)
+        for row in csvreader:
+            if row[2] == candidate: 
+                vote_count = vote_count + 1
+        return vote_count 
 
-
-file = 'budget_data.csv'
-Total_Months = 0
-Net_profit_loss = 0
-Average_profit_loss = int
-Row_count = 0 
-
-Profit = 0
-Last_Change_Profit=0
-Change_Profit = 0
-Profit_Change_List = []
-Date_List = []
-
-
-# In[101]:
-
-
+#reads from csv file to find all unique candidates in csv file, appends candidates to a list
 with open(file) as csvfile:
-    csvreader = csv.reader(csvfile, delimiter=",")
-    
+    csvreader = csv.reader(csvfile)
+    candidate_list = []
+    next(csvreader)
     for row in csvreader:
-        
-        Profit = int(row[1])
-        Change_Profit = (Profit - Last_Change_Profit)
-        Profit_Change_List.append(Change_Profit)
-        Date_List.append(row[0])
-        Last_Change_Profit = Profit
-        Net_profit_loss = (Net_profit_loss + Profit)
-        Row_count = (Row_count + 1)
-        
+        if row[2] not in candidate_list:
+            candidate_list.append(row[2])    
 
+#Establishes dictionary of two lists: names of candidates and votes each received, the latter being found by calling on the candidate_votes function
+Candidate_Dictionary = {"Name":[],"Votes":[]}
+for candidate in candidate_list:
+    Candidate_Dictionary["Name"].append(str(candidate))
+    Candidate_Dictionary["Votes"].append(int(candidate_votes(candidate)))
+    
+#adds all votes from the votes list in the candidate dictionary to find total votes in the election 
+Total_Votes = 0
+for vote in Candidate_Dictionary["Votes"]:
+    Total_Votes = Total_Votes + vote
 
-# In[102]:
+#writes election results to .txt file in the main.py directory 
+with open("Poll_Results.txt", "w") as text_file:
+    print("Election Results", file=text_file)
+    print("-------------------------------", file=text_file)
+    print(f"Total Votes: {Total_Votes}", file = text_file)
+    #loop to print percentage of total votes and total votes for each candidate based on dictionary values
+    for candidate in Candidate_Dictionary["Name"]:
+        Candidate_Vote = Candidate_Dictionary["Votes"][Candidate_Dictionary["Name"].index(candidate)]
+        Candidate_Percent = (100*(Candidate_Vote/Total_Votes))
+        print(f"{candidate}: {round(Candidate_Percent, 2)}% ({Candidate_Vote})", file = text_file)
+    print("-------------------------------", file = text_file)
+    winner_votes = max(Candidate_Dictionary["Votes"])
+    winner_index = Candidate_Dictionary["Votes"].index(winner_votes)
+    winner_name = Candidate_Dictionary["Name"][winner_index]
+    print(f"Winner: {winner_name}", file = text_file)
 
-
-Year_Seperator = "-20"
-Greatest_Increase = max(Profit_Change_List)
-Greatest_Increase_Date = Date_List[Profit_Change_List.index(Greatest_Increase)]
-Greatest_Increase_Date_re = Year_Seperator.join(Greatest_Increase_Date.split('-'))
-Greatest_Decrease = min(Profit_Change_List)
-Greatest_Decrease_Date = Date_List[Profit_Change_List.index(Greatest_Decrease)]
-Greatest_Decrease_Date_re = Year_Seperator.join(Greatest_Decrease_Date.split('-'))
-Average_Change = sum(Profit_Change_List)
-
-
-# In[103]:
-
-
-print("Financial Analysis")
-print("----------------------------")
-print(f"Total Months: {Row_count}")
-print(f"Total: ${Net_profit_loss}")
-print(f"Average Change: {Average_Change}")
-print(f"Greatest Increase in Profits: {Greatest_Increase_Date_re} (${Greatest_Increase})")
-print(f"Greatest Decrease in Profits: {Greatest_Decrease_Date_re} (${Greatest_Decrease})")
-
-
-# In[ ]:
-
-
-
-
+#reads from results text file to print results to the terminal
+with open("Poll_Results.txt", "r") as text_file:
+    for line in text_file:
+        print(line)
